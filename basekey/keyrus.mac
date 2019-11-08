@@ -107,7 +107,7 @@ J0F06:	LD	A,(NEWKEY+6)
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F10:	CALL	H.KEYA
+J0F10:	CALL	H.KEYA		; SHIFT,CTRL,GRAPH handler
         LD	E,A
         LD	D,00H
         LD	HL,D1033-030H
@@ -141,7 +141,7 @@ J0F29:	LD	A,0FH
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F36:	LD	HL,CAPST
+J0F36:	LD	HL,CAPST		; CAPS handler
         LD	A,(HL)
         CPL	
         LD	(HL),A
@@ -337,16 +337,16 @@ J1073:	LD	HL,CAPST
 
         JR	J1BAC
 
-I1B96:	DEFB	030H,J0F83 AND 255
-        DEFB	033H,J0F10 AND 255
-        DEFB	034H,J0F36 AND 255
-        DEFB	035H,J0F1F AND 255
-        DEFB	03AH,J0FC3 AND 255
-        DEFB	03CH,J0F10 AND 255
-        DEFB	03DH,J0F46 AND 255
-        DEFB	041H,J0F10 AND 255
-        DEFB	042H,J0F06 AND 255
-        DEFB	0FFH,J0F10 AND 255
+I1B96:	DEFB	030H,J0F83 AND 255		; scancodes 000H-02FH
+        DEFB	033H,J0F10 AND 255		; SHIFT,CTRL,GRAPH
+        DEFB	034H,J0F36 AND 255		; CAPS
+        DEFB	035H,J0F1F AND 255		; CODE
+        DEFB	03AH,J0FC3 AND 255		; F1,F2,F3,F4,F5
+        DEFB	03CH,J0F10 AND 255		; ESC,TAB
+        DEFB	03DH,J0F46 AND 255		; STOP
+        DEFB	041H,J0F10 AND 255		; BS,SELECT,RETURN,SPACE
+        DEFB	042H,J0F06 AND 255		; HOME
+        DEFB	0FFH,J0F10 AND 255		; ins,del,left,up,down,right, numeric pad
 
         DEFS	01BABH-$,0
 

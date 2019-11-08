@@ -466,7 +466,7 @@ A0205:  ex      (sp),hl
         ld      d,(hl)
         inc     hl
         push    de
-        pop     ix                      ; adres
+        pop     ix                      ; address
         pop     de
         pop     af
         ex      (sp),hl
@@ -1280,7 +1280,7 @@ A0765:  push    af
         djnz    A0765
         ret
 ;
-A0777:  call    A0B9F                   ; grafic mode ?
+A0777:  call    A0B9F                   ; graphic mode ?
         jr      z,A07A1                 ; yep, screen 2
         jr      nc,A07B9                ; yep, screen 3
 A077E:  ld      a,(SCRMOD)
@@ -1709,11 +1709,12 @@ A0A13:  ld      a,(hl)
         dec     hl
         djnz    A0A13
         pop     hl
-        ld      bc,255*8
-        add     hl,bc                   ; vramadres cursor patern
+CURSOR_CODE EQU 255
+        ld      bc,CURSOR_CODE*8
+        add     hl,bc                   ; vramaddress cursor patern
         call    A0BBE                   ; copy LINWRK to vram
         pop     hl
-        ld      c,0FFH
+        ld      c,CURSOR_CODE
         jp      A0BE6                   ; put cursor on screen
 ;
 A0A27:  ld      a,(CSRSR)
@@ -3580,7 +3581,7 @@ A18E0:  ld      (BRDATR),a
 ;
 A18E4:  ld      hl,0
         ld      c,l
-        call    A15D9                   ; grafic mode ?
+        call    A15D9                   ; graphic mode ?
         jr      nz,A1951                ; nop
         ld      a,b
         ld      (FILNAM+0),a
@@ -3602,7 +3603,7 @@ A18F9:  call    A1647                   ; get color of pixel
 ;
 A190C:  call    A19AE
         push    de
-        call    A1639                   ; get pixel adres & mask
+        call    A1639                   ; get pixel address & mask
         ld      (CSAVEA),hl
         ld      (CSAVEM),a              ; save it
         ld      de,0
@@ -3616,12 +3617,12 @@ A191C:  inc     de
         jr      A191C
 ;
 A192D:  push    de
-        call    A1639                   ; get pixel adres & mask
+        call    A1639                   ; get pixel address & mask
         push    hl
         push    af                      ; save
         ld      hl,(CSAVEA)
         ld      a,(CSAVEM)
-        call    A1640                   ; set pixel adres & mask
+        call    A1640                   ; set pixel address & mask
         ex      de,hl
         ld      (FILNAM+1),hl
         ld      a,(FILNAM+0)
@@ -4257,7 +4258,7 @@ A24FB:  push    bc
         pop     de
         push    bc
         ld      c,e
-        call    A0BE6                   ; calc VRAM adres
+        call    A0BE6                   ; calc VRAM address
         pop     bc
         ld      a,(LINLEN)
         inc     h
@@ -4335,7 +4336,7 @@ A257D:  ld      a,(LINLEN)
         inc     h
 A2584:  call    A0BD8                   ; read char from VRAM
         dec     h
-        call    A0BE6                   ; calc VRAM adres
+        call    A0BE6                   ; calc VRAM address
         inc     h
         inc     h
         ld      a,(LINLEN)
@@ -4344,7 +4345,7 @@ A2584:  call    A0BD8                   ; read char from VRAM
         jr      nz,A2584
         dec     h
 A2595:  ld      c,020H
-        call    A0BE6                   ; calc VRAM adres
+        call    A0BE6                   ; calc VRAM address
         call    A0C1D                   ; extend on next line ?
         jp      nz,A09E1                ; cursor on
         push    hl
@@ -4352,7 +4353,7 @@ A2595:  ld      c,020H
         ld      h,001H
         call    A0BD8                   ; read char from VRAM
         ex      (sp),hl
-        call    A0BE6                   ; calc VRAM adres
+        call    A0BE6                   ; calc VRAM address
         pop     hl
         jr      A257D
 

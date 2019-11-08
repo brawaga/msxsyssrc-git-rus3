@@ -469,7 +469,7 @@ J0205:  CALL    C028C
 ;       Subroutine      CALSLT
 ;       Inputs          ________________________
 ;       Outputs         ________________________
-;       Remark          Just a jump at this adres to have same entry point as MSX1
+;       Remark          Just a jump at this address to have same entry point as MSX1
 
 C0217:  JP      J02D8
 
@@ -764,7 +764,7 @@ J0340:  PUSH    HL
         JR      C0333
 
 ;       Subroutine      calculate masks
-;       Inputs          A=slotid, HL=adres
+;       Inputs          A=slotid, HL=address
 ;       Outputs         P set if expanded slot, A=slotid, D=PPPPPPPP, E=page select mask
 ;                    B=primairy slot or mask, C=page clear mask
 
@@ -1389,8 +1389,8 @@ J067F:  PUSH    IX
         JR      J0644
 
 ;       Subroutine      setup for INIR/OTIR
-;       Inputs          HL = vram adres, DE = ram adres, BC = size
-;       Outputs         DE = vram adres, HL = ram adres, B = initial repeatcount, A = loopcount
+;       Inputs          HL = vram address, DE = ram address, BC = size
+;       Outputs         DE = vram address, HL = ram address, B = initial repeatcount, A = loopcount
 
 C0687:  EX      DE,HL
         LD      A,C
@@ -1401,9 +1401,9 @@ C0687:  EX      DE,HL
         INC     A
         RET
 
-;       Subroutine      convert base vram adres to screenpage vram adres
-;       Inputs          HL = base vram adres, D = active screenpage
-;       Outputs         DHL = vram adres for screenpage
+;       Subroutine      convert base vram address to screenpage vram address
+;       Inputs          HL = base vram address, D = active screenpage
+;       Outputs         DHL = vram address for screenpage
 
 C068F:  EX      DE,HL
         LD      A,(SCRMOD)
@@ -1439,7 +1439,7 @@ C06A9:  PUSH    BC
         RET
 
 ;       Subroutine      NSTWRT
-;       Inputs          HL=vram adres (range:0-0FFFFH)
+;       Inputs          HL=vram address (range:0-0FFFFH)
 ;       Outputs         ________________________
 
 
@@ -1456,7 +1456,7 @@ C06B3:  PUSH    BC
         JR      J06D3
 
 ;       Subroutine      NSETRD
-;       Inputs          HL=vram adres (range:0-0FFFFH)
+;       Inputs          HL=vram address (range:0-0FFFFH)
 ;       Outputs         ________________________
 
 
@@ -1566,7 +1566,7 @@ J072A:  POP     AF
         RET
 
 ;       Subroutine      LDIRMV (vram to memory)
-;       Inputs          HL = vram adres, DE = ram adres, BC = size
+;       Inputs          HL = vram address, DE = ram address, BC = size
 ;       Outputs         ________________________
 
 
@@ -1625,7 +1625,7 @@ C0777:  PUSH    IX
         JP      J0295
 
 ;       Subroutine      LDIRVM (memory to vram)
-;       Inputs          HL = RAM adres, DE = VRAM adres, BC = size
+;       Inputs          HL = RAM address, DE = VRAM address, BC = size
 ;       Outputs         ________________________
 
 
@@ -1737,7 +1737,7 @@ J07E9:  CALL    C06C5
 C07F1:  CALL    C0B98
 
 ;       Subroutine      SETWRT
-;       Inputs          HL=vram adres
+;       Inputs          HL=vram address
 ;       Outputs         ________________________
 
 
@@ -1804,7 +1804,7 @@ C0838:  PUSH    AF
         JR      J0841
 
 ;       Subroutine      FILVRM
-;       Inputs          HL=vram adres,BC=size,A=data
+;       Inputs          HL=vram address,BC=size,A=data
 ;       Outputs         ________________________
 
 
@@ -2096,7 +2096,7 @@ C0976:  INC     HL
         RET
 
 ;       Subroutine      call subroutine
-;       Inputs          BC = adres of subroutine
+;       Inputs          BC = address of subroutine
 ;       Outputs         ________________________
 
 
@@ -2285,11 +2285,12 @@ J0A70:  LD      A,(HL)
         DEC     HL
         DJNZ    J0A70
         POP     HL
-        LD      BC,07F8H
+CURSOR_CODE EQU 255
+        LD      BC,CURSOR_CODE*8
         ADD     HL,BC
         CALL    C0B6B
         POP     HL
-        LD      C,0FFH
+        LD      C,CURSOR_CODE
         JP      C0B8D
 
 ;       Subroutine      remove cursor when disabled
@@ -2516,7 +2517,7 @@ C0B4E:  LD      A,(SCRMOD)
         RET
 
 ;       Subroutine      copy 8 bytes of vram to LINWRK
-;       Inputs          HL=vram adres
+;       Inputs          HL=vram address
 ;       Outputs         ________________________
 
 
@@ -2541,7 +2542,7 @@ J0B61:  LD      B,00H
         RET
 
 ;       Subroutine      copy 8 bytes from LINWRK to vram
-;       Inputs          HL=vram adres
+;       Inputs          HL=vram address
 ;       Outputs         ________________________
 
 
@@ -2589,15 +2590,15 @@ C0B8D:  PUSH    HL
         POP     HL
         RET
 
-;       Subroutine      convert linenumber to VRAM adres
+;       Subroutine      convert linenumber to VRAM address
 ;       Inputs          L=y pos
-;       Outputs         HL=vram adres in nametable
+;       Outputs         HL=vram address in nametable
 
 C0B96:  LD      H,01H   ; 1 
 
-;       Subroutine      convert screenlocation to VRAM adres
+;       Subroutine      convert screenlocation to VRAM address
 ;       Inputs          H=x pos, L=y pos
-;       Outputs         HL=vram adres in nametable
+;       Outputs         HL=vram address in nametable
 
 C0B98:  PUSH    BC
         DEC     H
@@ -2780,7 +2781,7 @@ J0C39:  JP      J0F29
 ;       Subroutine      KEYINT
 ;       Inputs          ________________________
 ;       Outputs         ________________________
-;       Remark          Entry at the same adres as MSX1
+;       Remark          Entry at the same address as MSX1
 
 J0C3C:  PUSH    HL
         PUSH    DE
@@ -2906,7 +2907,7 @@ J0D02:  POP     IX
 ;       Subroutine      scan keyboard and translate to keycodes
 ;       Inputs          ________________________
 ;       Outputs         Zx set if keyboardbuffer is empty
-;       Remark          Entry at the same adres as MSX1
+;       Remark          Entry at the same address as MSX1
 
 C0D12:  IN      A,(0AAH)
         AND     0F0H
@@ -2979,7 +2980,7 @@ C0D62:  LD      HL,(GETPNT)
 ;       Subroutine      CHSNS
 ;       Inputs          ________________________
 ;       Outputs         ________________________
-;       Remark          Entry at the same adres as MSX1
+;       Remark          Entry at the same address as MSX1
 
 C0D6A:  EI
         PUSH    HL
@@ -3003,7 +3004,7 @@ J0D82:  CALL    C0D62
 ;       Subroutine      convert to scancode and handle
 ;       Inputs          ________________________
 ;       Outputs         ________________________
-;       Remark          Entry at the same adres as MSX1
+;       Remark          Entry at the same address as MSX1
 
 C0D89:  PUSH    HL
         PUSH    DE
