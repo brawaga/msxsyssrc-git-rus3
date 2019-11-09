@@ -266,7 +266,7 @@ J0FD0:	CP	20H
 
 J0FDF:	JP	J1073			; patch code for upcase
 
-        DEFS	00FF0H-$,0		; unused space
+        DEFS	00FEEH-$,0		; unused space
 
 J0FEE:	AND	0DFH
 J0FF0:	JP	C0F55
