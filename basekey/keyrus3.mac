@@ -121,11 +121,11 @@ J0F10:	CALL	H.KEYA		; SHIFT,CTRL,GRAPH handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F1F:	LD	HL,KANAST
+J0F1F:	LD	HL,KANAST	; TODO migrate, using free space at 0x1098. Hence handler itself must be at 0x0F**, jump needed.
         LD	A,(HL)
         CPL	
         LD	(HL),A
-J0F29:	LD	A,0FH
+J0F29:	LD	A,0FH	; TODO or maybe move this to 0x1098, hence no need to be at 0x0F**, this will give more space to handler above.
         OUT	(0A0H),A
         IN	A,(0A2H)
         AND	7FH
@@ -216,7 +216,7 @@ J0F83:	LD	A,(NEWKEY+6)
 
         DEFS	0F9EH-$,0		; unused space
 
-J0F9E:	AND	001H
+J0F9E:	AND	001H			; SHIFT state
 J0FA0:	LD	E,A
         ADD	A,A
         ADD	A,E
@@ -224,7 +224,7 @@ J0FA0:	LD	E,A
         ADD	A,A
         ADD	A,A
         ADD	A,A
-        LD	E,A
+        LD	E,A				; SHIFT state * 48
         LD	D,00H
         LD	HL,I0DA5
         ADD	HL,DE
@@ -233,7 +233,7 @@ J0FA0:	LD	E,A
         POP	AF
         LD	A,(HL)
         INC	A
-        JP	Z,J0F1F			; dead key, handle
+        DEFB 00H, 00H, 00H	; no dead key handle, usual key for RU.
         DEC	A
         RET	Z			; no action for key, quit
         JR	C,J0FD0			; CTRL not pressed,
@@ -320,18 +320,20 @@ J1073:	LD	HL,CAPST
         INC	(HL)
         DEC	(HL)
         JP	Z,J0FF0
+        CP	099H	; ё
+        JR	Z,RU_UPC;
         CP	61H
         JP	C,J1011
-        CP	0DFH
+        CP	0E0H
         JP	NC,J1011
         CP	7BH
         JP	C,J0FEE
         CP	0C0H
         JP	C,J1011
-        OR	20H
+RU_UPC: OR	20H
         JP	J0FF0
 
-        DEFS	010C2H-$,0		; unused space
+J1098:  DEFS	010C2H-$,0		; unused space
 
         ORG	01B94H
 

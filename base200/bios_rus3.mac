@@ -2285,7 +2285,7 @@ J0A70:  LD      A,(HL)
         DEC     HL
         DJNZ    J0A70
         POP     HL
-CURSOR_CODE EQU 255
+CURSOR_CODE EQU 0
         LD      BC,CURSOR_CODE*8
         ADD     HL,BC
         CALL    C0B6B
