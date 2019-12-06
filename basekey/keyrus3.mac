@@ -107,7 +107,7 @@ J0F06:	LD	A,(NEWKEY+6)
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F10:	CALL	H.KEYA		; SHIFT,CTRL handler
+J0F10:	CALL	H.KEYA		; SHIFT,CTRL,GRAPH handler
         LD	E,A
         LD	D,00H
         LD	HL,D1033-030H
@@ -121,37 +121,35 @@ J0F10:	CALL	H.KEYA		; SHIFT,CTRL handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F1F:	LD	A,0FFH	; TODO migrate, using free space at 0x1098. Hence handler itself must be at 0x0F**, jump needed.
-J0F21:  LD	HL,KANAST
+J0F1F:	XOR A	; KANA (LAT) handler
+J0F20:  LD	HL,KANAST
         LD	(HL),A
-J0F29:	LD	A,0FH	; TODO or maybe move this to 0x1098, hence no need to be at 0x0F**, this will give more space to handler above.
+J0F29:	LD	A,0FH
         OUT	(0A0H),A
         IN	A,(0A2H)
         AND	7FH
         LD	B,A
         LD	A,(HL)
-        CPL	
         AND	80H
         OR	B
         OUT	(0A1H),A	; Bit 7 is used as Russian flag
+        AND	80H
+        LD	A, 0DH
+        JR	Z, ?
+        DEC	A
+J0F3A:	OUT (0ABH),A
         RET
+
+K.BCAP:	RET		; No action to do, CAPS LED used to indicate RUS
 
 ;	  Subroutine CAPS key handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F36:	LD	HL,CAPST		; CAPS handler
-        LD	A,(HL)
-        CPL	
-        LD	(HL),A
-        CPL	
+J0F3E:	LD	A, 0FFH		; CAPS (RUS) handler
+        JR J0F20
 
-K.BCAP:	AND	A
-        LD	A,0CH
-        JR	Z,J0F43
-        INC	A
-J0F43:	OUT	(0ABH),A
-        RET	
+        DEFB 00H, 00H, 00H, 00H; unused space (4 bytes)
 
 J0F46:	LD	A,(NEWKEY+6)
         RRCA	
@@ -262,12 +260,7 @@ J0FD0:	CP	20H
 
 J0FDF:	JP	J1073			; patch code for upcase
 
-J0FE2:	XOR A		; GRAPH handler
-        CALL	J0F21
-        XOR A
-        JP	J0F10
-
-        DEFS	00FEEH-$,0		; unused space (4 bytes)
+        DEFS	00FEEH-$,0		; unused space (12 bytes)
 
 J0FEE:	AND	0DFH
 J0FF0:	JP	C0F55
@@ -333,17 +326,16 @@ RU_UPC: OR	20H
         JP	J0FF0
 
 J1098:  DEFB	030H,J0F83 AND 255		; scancodes 000H-02FH
-        DEFB	032H,J0F10 AND 255		; SHIFT,CTRL
-        DEFB	033H,J0FE2 AND 255		; GRAPH
-        DEFB	034H,J0F36 AND 255		; CAPS
-        DEFB	035H,J0F1F AND 255		; CODE
+        DEFB	033H,J0F10 AND 255		; SHIFT,CTRL,GRAPH
+        DEFB	034H,J0F3E AND 255		; CAPS (RUS)
+        DEFB	035H,J0F1F AND 255		; CODE (LAT)
         DEFB	03AH,J0FC3 AND 255		; F1,F2,F3,F4,F5
         DEFB	03CH,J0F10 AND 255		; ESC,TAB
         DEFB	03DH,J0F46 AND 255		; STOP
         DEFB	041H,J0F10 AND 255		; BS,SELECT,RETURN,SPACE
         DEFB	042H,J0F06 AND 255		; HOME
         DEFB	0FFH,J0F10 AND 255		; ins,del,left,up,down,right, numeric pad
-        DEFS	010C2H-$,0		; unused space (20 bytes)
+        DEFS	010C2H-$,0		; unused space (22 bytes)
 
         ORG	01B94H
 
