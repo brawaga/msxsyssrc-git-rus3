@@ -2759,24 +2759,7 @@ J0C1E:  ADD     HL,DE
 J0C22:  POP     DE
         RET
 
-; The following NOP really puzzels me
-; It has nothing to do with compatibility to MSX1 or so
-; Maybe is just leftover space and 0C25 was pushed against 0C3C
-        DEFS    0C25H-$,0
-
-J0C25:  LD      A,(NEWKEY+6)
-        RRCA
-        JR      C,J0C34
-        XOR     A
-        LD      (CHRCNT),A
-        INC     A
-        SET     0,(HL)
-        JR      J0C39
-
-J0C34:  LD      A,0FFH
-J0C36:  LD      (KANAST),A
-
-J0C39:  JP      J0F29
+        DEFS    0C3CH-$,0		; unused space (24 bytes)
 
 ;       Subroutine      KEYINT
 ;       Inputs          ________________________

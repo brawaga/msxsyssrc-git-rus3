@@ -95,22 +95,23 @@ C0EF1:	LD	A,(HL)
         LD	A,(ONGSBF)
         INC	A
         LD	(ONGSBF),A
-        RET	
+        RET
 
 J0F06:	LD	A,(NEWKEY+6)
-        RRCA	
+        RRCA
         LD	A,0CH
         SBC	A,0
         JR	C0F55
 
-;	  Subroutine key handler for scancode 030H and above returning normal keycode
+;	  Subroutine key handler for scancode 03AH and above returning normal keycode
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F10:	CALL	H.KEYA		; SHIFT,CTRL,GRAPH handler
+J0F10:	LD	A,3CH		; SHIFT,CTRL,GRAPH : A points to zero value in the table
+J0F12:	CALL	H.KEYA		; ESC,TAB,BS,SELECT,RETURN,SPACE,ins,del,left,up,down,right,numeric pad handler
         LD	E,A
         LD	D,00H
-        LD	HL,D1033-030H
+        LD	HL,D1003-03AH
         ADD	HL,DE
         LD	A,(HL)
         AND	A
@@ -121,35 +122,35 @@ J0F10:	CALL	H.KEYA		; SHIFT,CTRL,GRAPH handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F1F:	XOR A	; KANA (LAT) handler
-J0F20:  LD	HL,KANAST
+J0F21:	XOR A	; KANA (LAT) handler
+J0F22:  LD	HL,KANAST
         LD	(HL),A
-J0F29:	LD	A,0FH
+        LD	A,0FH
         OUT	(0A0H),A
         IN	A,(0A2H)
         AND	7FH
         LD	B,A
         LD	A,(HL)
         AND	80H
+        LD	C, A	; From here it differs from standard one, 2 bytes economy.
         OR	B
         OUT	(0A1H),A	; Bit 7 is used as Russian flag
-        AND	80H
-        LD	A, 0DH
-        JR	Z, ?
-        DEC	A
-J0F3A:	OUT (0ABH),A
+        LD	A, C
+        RLCA
+        XOR, 0DH
+        OUT (0ABH),A
         RET
-
-K.BCAP:	RET		; No action to do, CAPS LED used to indicate RUS
+K.BCAP:	RET		; 0F3D: No action to do, CAPS LED used to indicate RUS
 
 ;	  Subroutine CAPS key handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0F3E:	LD	A, 0FFH		; CAPS (RUS) handler
-        JR J0F20
-
         DEFB 00H, 00H, 00H, 00H; unused space (4 bytes)
+
+J0F42:	LD	A, 0FFH		; CAPS (RUS) handler
+        JR J0F22
+
 
 J0F46:	LD	A,(NEWKEY+6)
         RRCA	
@@ -166,7 +167,7 @@ J0F50:	LD	(INTFLG),A
 
 C0F55:	LD	HL,(PUTPNT)
         LD	(HL),A
-        CALL	C105B
+        CALL	C10C2
         LD	A,(GETPNT)
         CP	L
         RET	Z
@@ -202,19 +203,23 @@ J0F83:	LD	A,(NEWKEY+6)
         PUSH	AF
         LD	A,E
         CPL	
-        JR	NC,J0F9E		; CTRL pressed,
+        JR	NC,J0FA2		; CTRL pressed,
         RRA	
         RRA	
         RLCA	
         AND	03H	; 3 
         BIT	1,A
-        JR	NZ,J0FA0		; GRAPH pressed,
-        JP	J1067			; patched code, handle russian �kana�, resumes at 0FA0H
+        JR	NZ,J0FA4		; GRAPH pressed,
+        PUSH	AF
+        LD	A,(KANAST)
+        AND	04H			; Bit 2 is used as Russian flag
+        LD	E,A
+        POP	AF
+        OR	E
+        JR	J0FA4
 
-        DEFS	0F9EH-$,0		; unused space (4 bytes)
-
-J0F9E:	AND	001H			; SHIFT state
-J0FA0:	LD	E,A				; If jumped here, shift state may contain 2*graph and 4*kana
+J0FA2:	AND	001H			; SHIFT state
+J0FA4:	LD	E,A				; If jumped here, shift state may contain 2*graph and 4*kana
         ADD	A,A
         ADD	A,E
         ADD	A,A
@@ -229,49 +234,62 @@ J0FA0:	LD	E,A				; If jumped here, shift state may contain 2*graph and 4*kana
         ADD	HL,BC			; pointer to character
         POP	AF
         LD	A,(HL)
-        DEFB 00H, 00H, 00H, 00H, 00H, 00H	; unused space (6 bytes)
-        JR	C,J0FD0			; CTRL not pressed,
+        JR	C,J0FCE			; CTRL not pressed,
         AND	0DFH
         SUB	40H
         CP	20H
         RET	NC
-J0FC1:	JR	C0F55
+J0FBF:	JR	C0F55
 
 ;	  Subroutine function key handler
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-J0FC3:	LD	A,(NEWKEY+6)
+J0FC1:	LD	A,(NEWKEY+6)
         RRCA	
-        JR	C,J0FCD
+        JR	C,J0FCB
         LD	A,C
         ADD	A,05H
         LD	C,A
-J0FCD:	JP	J0EC5
+J0FCB:	JP	J0EC5
 
-J0FD0:	CP	20H
-        JR	NC,J0FDF
+J0FCE:	CP	20H
+        JR	NC,J0FDD
         PUSH	AF
         LD	A,01H
         CALL	C0F55
         POP	AF
         ADD	A,40H
-        JR	J0FC1
+        JR	J0FBF
 
-J0FDF:	JP	J1073			; patch code for upcase
+J0FDD:	LD	HL,CAPST
+        INC	(HL)
+        DEC	(HL)
+        JR	Z,J0FFE
+        CP	099H	; ё
+        JR	Z,RU_UPC;
+        CP	61H
+        JR	C,J0FFE
+        CP	0E0H
+        JR	NC,J0FFE
+        CP	7BH
+        JR	C,J0FFC
+        CP	0C0H
+        JR	C,J0FFE
+RU_UPC: OR	20H
+        JR	J0FFE
 
-        DEFS	00FEEH-$,0		; unused space (12 bytes)
+J0FFC:	AND	0DFH
+J0FFE:	JR	J0FBF
 
-J0FEE:	AND	0DFH
-J0FF0:	JP	C0F55
+        DB 0, 0, 0		; unused space (3 bytes)
 
-        DEFS	01011H-$,0		; unused space (30 bytes)
+D1003:	DEFB	        1BH,09H,00H,08H,18H,0DH
+        DEFB	20H,0CH,12H,7FH,1DH,1EH,1FH,1CH
+        DEFB	0DH,2BH,2AH,30H,31H,32H,33H,34H
+        DEFB	35H,36H,37H,38H,39H,2DH,2CH,2EH
 
-J1011:	JP	C0F55
-
-        DEFS	01021H-$,0		; unused space (13 bytes)
-
-K.HAND:	LD	A,C
+K.HAND:	LD	A,C		; at 1021H
         LD	HL,I1B96
         CALL	H.KEYC
         LD	D,0FH
@@ -284,66 +302,31 @@ J102A:	CP	(HL)
         POP	DE
         JR	J102A
 
-D1033:	DEFB	00H,00H,00H,00H,00H,00H,00H,00H
-        DEFB	00H,00H,1BH,09H,00H,08H,18H,0DH
-        DEFB	20H,0CH,12H,7FH,1DH,1EH,1FH,1CH
-        DEFB	0DH,2BH,2AH,30H,31H,32H,33H,34H
-        DEFB	35H,36H,37H,38H,39H,2DH,2CH,2EH
 
 ;	  Subroutine __________________________
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-C105B:	XOR	A
-        DEFB	00H,00H,00H		; unused space (3 bytes)
-        JR	C10C2
+D1033:	; was handler table here, moved to D1003
 
-        DEFS	01067H-$,0		; unused space (6 bytes)
-
-J1067:	PUSH	AF
-        LD	A,(KANAST)
-        AND	04H			; Bit 2 is used as Russian flag
-        LD	E,A
-        POP	AF
-        OR	E
-        JP	J0FA0
-
-J1073:	LD	HL,CAPST
-        INC	(HL)
-        DEC	(HL)
-        JP	Z,J0FF0
-        CP	099H	; ё
-        JR	Z,RU_UPC;
-        CP	61H
-        JP	C,J1011
-        CP	0E0H
-        JP	NC,J1011
-        CP	7BH
-        JP	C,J0FEE
-        CP	0C0H
-        JP	C,J1011
-RU_UPC: OR	20H
-        JP	J0FF0
-
-J1098:  DEFB	030H,J0F83 AND 255		; scancodes 000H-02FH
-        DEFB	033H,J0F10 AND 255		; SHIFT,CTRL,GRAPH
-        DEFB	034H,J0F3E AND 255		; CAPS (RUS)
-        DEFB	035H,J0F1F AND 255		; CODE (LAT)
-        DEFB	03AH,J0FC3 AND 255		; F1,F2,F3,F4,F5
-        DEFB	03CH,J0F10 AND 255		; ESC,TAB
-        DEFB	03DH,J0F46 AND 255		; STOP
-        DEFB	041H,J0F10 AND 255		; BS,SELECT,RETURN,SPACE
-        DEFB	042H,J0F06 AND 255		; HOME
-        DEFB	0FFH,J0F10 AND 255		; ins,del,left,up,down,right, numeric pad
-        DEFS	010C2H-$,0		; unused space (22 bytes)
+        DEFS	01073H-$,0		; unused space (143 bytes)
 
         ORG	01B94H
 
         JR	J1BAC
 
-I1B96:	;was handler table here, moved to J1098
+I1B96:	DEFB	030H,J0F83 AND 255		; scancodes 000H-02FH
+        DEFB	033H,J0F10 AND 255		; SHIFT,CTRL,GRAPH
+        DEFB	034H,J0F42 AND 255		; CAPS (RUS)
+        DEFB	035H,J0F21 AND 255		; CODE (LAT)
+        DEFB	03AH,J0FC1 AND 255		; F1,F2,F3,F4,F5
+        DEFB	03CH,J0F12 AND 255		; ESC,TAB
+        DEFB	03DH,J0F46 AND 255		; STOP
+        DEFB	041H,J0F12 AND 255		; BS,SELECT,RETURN,SPACE
+        DEFB	042H,J0F06 AND 255		; HOME
+        DEFB	0FFH,J0F12 AND 255		; ins,del,left,up,down,right,numeric pad
 
-        DEFS	01BABH-$,0	; unused space (21 byte)
+        DEFS	01BABH-$,0	; unused space (1 byte)
 
 ; *************************************
 ; END OF RUSSIAN KEYBOARD HANDLER

@@ -1709,7 +1709,7 @@ A0A13:  ld      a,(hl)
         dec     hl
         djnz    A0A13
         pop     hl
-CURSOR_CODE EQU 0
+CURSOR_CODE EQU 127
         ld      bc,CURSOR_CODE*8
         add     hl,bc                   ; vramaddress cursor patern
         call    A0BBE                   ; copy LINWRK to vram
