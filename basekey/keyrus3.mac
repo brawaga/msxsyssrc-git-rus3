@@ -123,11 +123,11 @@ J0F12:	CALL	H.KEYA		; ESC,TAB,BS,SELECT,RETURN,SPACE,ins,del,left,up,down,right,
 ;	     Outputs ________________________
 
 J0F21:	XOR A	; KANA (LAT) handler
-J0F22:  LD	HL,KANAST
+J0F22:  LD	HL,KANAST	; Maybe reuse J111C from bios somehow.
         LD	(HL),A
         LD	A,0FH
-        OUT	(0A0H),A
-        IN	A,(0A2H)
+        OUT	(0A0H),A	; CALL C110E instead of these
+        IN	A,(0A2H)	; two lines will economy 1 byte
         AND	7FH
         LD	B,A
         LD	A,(HL)

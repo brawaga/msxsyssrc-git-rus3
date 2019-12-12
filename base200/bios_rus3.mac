@@ -1191,7 +1191,7 @@ J0592:  LD      A,07H   ; 7
         LD      E,80H
         CALL    C1102
         LD      A,0FH   ; 15 
-        LD      E,0CFH
+        LD      E,04FH
         CALL    C1102
         LD      A,0BH   ; 11 
         LD      E,A
@@ -2285,7 +2285,7 @@ J0A70:  LD      A,(HL)
         DEC     HL
         DJNZ    J0A70
         POP     HL
-CURSOR_CODE EQU 0
+CURSOR_CODE EQU 127
         LD      BC,CURSOR_CODE*8
         ADD     HL,BC
         CALL    C0B6B
@@ -3154,8 +3154,8 @@ C1113:  PUSH    IX
 
 J111C:  PUSH    AF
         LD      A,0FH   ; 15 
-        OUT     (0A0H),A
-        IN      A,(0A2H)
+        OUT     (0A0H),A	; CALL C110E instead of these
+        IN      A,(0A2H)	; two lines will economy 1 byte
         AND     7FH
         LD      B,A
         POP     AF

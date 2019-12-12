@@ -2017,7 +2017,7 @@ A0BF2:  push    bc
         and     a
         ld      a,(LINLEN)
         jr      z,A0C0D
-        sub     022H
+        sub     022H		; One JR could be removed when SUB 2A replaced with SUB 8, which will have optional, not alternative role.
         jr      A0C10
 ;
 A0C0D:  add     hl,bc
