@@ -385,7 +385,7 @@ NSTWRT: JP      C06B3
 NRDVRM: JP      J07E9
 NWRVRM: JP      J0769
 
-        DEFS    001B6H-$
+        DEFS    001B6H-$		; unused space (60 bytes)
 
 J01B6:  POP     AF
         LD      D,0FCH
@@ -464,7 +464,7 @@ J0205:  CALL    C028C
         CALL    M7FBE
         JR      J0244
 
-        DEFS    0217H-$                 ; align to 0217H
+        DEFS    0217H-$		; unused space (3 bytes)
 
 ;       Subroutine      CALSLT
 ;       Inputs          ________________________
@@ -2243,17 +2243,16 @@ J0A33:  LD      (CSRSW),A
 ;       Outputs         ________________________
 
 
-C0A37:  LD      A,(CSRSW)
+C0A37:  LD      A, (CSRSW)
         AND     A
         RET     NZ
         JR      J0A43
-
 ;       Subroutine      display cursor when enabled
 ;       Inputs          ________________________
 ;       Outputs         ________________________
 
 
-C0A3E:  LD      A,(CSRSW)
+C0A3E:  LD      A, (CSRSW)
         AND     A
         RET     Z
 J0A43:  CALL    H.DSPC
@@ -2298,7 +2297,7 @@ CURSOR_CODE EQU 127
 ;       Outputs         ________________________
 
 
-C0A84:  LD      A,(CSRSW)
+C0A84:  LD      A, (CSRSW)
         AND     A
         RET     NZ
         JR      J0A90
@@ -2308,7 +2307,7 @@ C0A84:  LD      A,(CSRSW)
 ;       Outputs         ________________________
 
 
-C0A8B:  LD      A,(CSRSW)
+C0A8B:  LD      A, (CSRSW)
         AND     A
         RET     Z
 J0A90:  CALL    H.ERAC
@@ -2317,7 +2316,7 @@ J0A90:  CALL    H.ERAC
         LD      HL,(CSRY)
         LD      A,(CURSAV)
         LD      C,A
-        JP      C0B8D
+J0A9E:  JP      C0B8D
 
 ;       Subroutine      move cursor right if possible
 ;       Inputs          ________________________
@@ -2617,18 +2616,18 @@ C0B98:  PUSH    BC
         AND     A
         LD      A,(LINLEN)
         JR      Z,J0BB3
-        SBC     A,22H   ; """
+        SBC     A,22H
         JR      J0BC0
 
-J0BB3:  CP      29H     ; ")"
+J0BB3:  CP      29H 
         JR      C,J0BBD
         ADD     HL,BC
         ADD     HL,HL
-        SBC     A,52H   ; "R"
+        SBC     A,52H
         JR      J0BC0
 
 J0BBD:  ADD     HL,BC
-        SBC     A,2AH   ; "*"
+        SBC     A,2AH
 J0BC0:  ADD     HL,DE
         CPL
         AND     A
@@ -2759,7 +2758,7 @@ J0C1E:  ADD     HL,DE
 J0C22:  POP     DE
         RET
 
-        DEFS    0C3CH-$,0		; unused space (24 bytes)
+C0C24:  DEFS    0C3CH-$,0		; unused space (24 bytes)
 
 ;       Subroutine      KEYINT
 ;       Inputs          ________________________
