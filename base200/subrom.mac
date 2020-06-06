@@ -11672,6 +11672,6 @@ J3F8D:	DEC	D
 
         ENDIF
 
-        DEFS	04000H-$,0
+        DEFS	04000H-$,0  ; unused space (109 bytes)
 
         END

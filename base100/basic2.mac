@@ -12978,7 +12978,7 @@ J7FD9:  LD      (D.FFFF),A
 
         ENDIF
         
-        DEFS    08000H-$,0              ; unused space
+        DEFS    08000H-$,0              ; unused space (34 bytes)
 
         END
 

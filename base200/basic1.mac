@@ -3900,7 +3900,7 @@ C390D:	PUSH	BC
 ;	Inputs		________________________
 ;	Outputs		________________________
 
-C391A:	CALL	C2C59			; DAC = ARG
+C391A:  CALL	C2C59			; DAC = ARG
         CALL	C2CC7			; push ARG
         CALL	C30CF
         CALL	C2CDC			; pop ARG

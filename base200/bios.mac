@@ -1544,7 +1544,7 @@ C070C:  LD      A,(RG1SAV)
 
 ?0717:  CALL    H.INIP
         LD      HL,(CGPBAS)
-        CALL    C07F4
+        CALL    C07F4  ; SETWRT
         LD      A,(CGPNT+0)
         LD      HL,(CGPNT+1)
         LD      BC,256*8
@@ -1636,7 +1636,7 @@ C0780:  EX      DE,HL
         LD      A,(MODE)
         AND     08H     ; 8 
         JR      NZ,J079C
-        CALL    C07F4
+        CALL    C07F4  ; SETWRT
 J0792:  LD      A,(DE)
         OUT     (98H),A
         INC     DE
@@ -1700,7 +1700,7 @@ C07CE:  PUSH    IX
 
 
 C07D7:  PUSH    AF
-        CALL    C07F4
+        CALL    C07F4  ; SETWRT
         EX      (SP),HL
         EX      (SP),HL
         POP     AF

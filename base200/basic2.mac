@@ -12837,7 +12837,7 @@ J7D03:	LD	IX,S.SCOPY
         JP	C475A			; illegal function call
 ; #####################
 
-        DEFS	07D14H-$,0		; remaining space not used
+        DEFS	07D14H-$,0		; unused space (3 bytes)
 
 J7D14:
 ;
@@ -12880,7 +12880,7 @@ C7D29:
 
         JR	J7D31			; skip over unused space
 
-        DEFS	07D2FH-$,0
+        DEFS	07D2FH-$,0  ; unused space (4 bytes)
 
 
 ; orginally with MSX1, 07D2EH had
@@ -13408,7 +13408,7 @@ J7FE6:	LD	(D.FFFF),A		; switch sec. slot page 0 (rombios gone!)
         LD	A,E
         RET
 
-        DEFS	07FF5H-$,0		; unused space
+        DEFS	07FF5H-$,0		; unused space (7 bytes)
 
 ;	Subroutine	CALSLT after Vertical Retrace
 ;	Inputs		________________________

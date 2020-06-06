@@ -1295,6 +1295,6 @@ J3E54:	LD	L,A
 I3E76:	DEFB	"VIDEO RAM:",0
 I3E81:	DEFB	"USER  RAM:",0
 
-        DEFS	04000H-$,0
+        DEFS	04000H-$,0  ; unused space (372 bytes)
 
         END
