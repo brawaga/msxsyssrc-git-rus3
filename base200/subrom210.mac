@@ -119,6 +119,7 @@ C3711:	PUSH	HL
         POP	HL
         RET	
 
+; 14 bytes
 I371C:	DEFB	00AH
         DEFB	000H
         DEFB	000H
@@ -162,6 +163,7 @@ J374A:	LD	H,(HL)
         EX	(SP),HL
         RET	
 
+; 20 bytes
 I374E:	DEFW	C3A0D
         DEFW	C3A98
         DEFW	C3939
@@ -267,7 +269,7 @@ J37EB:	DEC	HL
         POP	DE
         LD	L,A
         LD	H,00H
-        ADD	HL,HL
+        ADD	HL,HL               ; TODO maybe move DE init higher and call C64HL1DE
         ADD	HL,HL
         ADD	HL,HL
         ADD	HL,HL
@@ -570,6 +572,7 @@ J39D3:	SUB	"0"
         OR	(HL)
         RET	
 
+; 5 bytes
 I39D8:	DEFB	"MEM0"
         DEFB	0
 
@@ -853,7 +856,7 @@ C3B9B:	SCF
         LD	L,B
         LD	H,00H
         DEC	HL
-        ADD	HL,HL
+        ADD	HL,HL       ; TODO maybe move DE init higher and call C32HL1DE
         ADD	HL,HL
         ADD	HL,HL
         ADD	HL,HL
@@ -1241,6 +1244,7 @@ J3DB4:	INC	DE
         LD	E,01H	; 1 
         RET	
 
+; 22 bytes
 I3DBF:	DEFB	03CH
         DEFW	I3DD5-1
         DEFB	03DH
@@ -1257,12 +1261,19 @@ I3DBF:	DEFB	03CH
         DEFW	I3E2C-1
         DEFB	0
 
+; 8 bytes
 I3DD5:	DEFB	"Bad FAT",0
+; 14 bytes
 I3DDD:	DEFB	"Bad file mode",0
+; 16 bytes
 I3DEB:	DEFB	"File still open",0
+; 20 bytes
 I3DFB:	DEFB	"File already exists",0
+; 14 bytes
 I3E0F:	DEFB	"RAM disk full",0
+; 15 bytes
 I3E1D:	DEFB	"Too many files",0
+; 17 bytes
 I3E2C:	DEFB	"RAM disk offline",0
 
 C3E3C:	PUSH	HL			; save KB string
