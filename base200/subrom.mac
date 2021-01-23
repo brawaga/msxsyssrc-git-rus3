@@ -411,7 +411,7 @@ DFFFF	EQU	0FFFFH
         JP	C07D9
 
 ?0109:	EI
-        JP	C08CB
+        JP	WTRVRM
 
 ?010D:	EI
         JP	C08D6
@@ -1655,11 +1655,11 @@ J071E:	CALL	C0626			; MSX1 screenmode ?
         LD	A,0D1H
         JR	C,J0727			; yep,
         LD	A,0D9H
-J0727:	CALL	C08CB			; set sprite Y-coord (write VRAM (active page))
+J0727:	CALL	WTRVRM			; set sprite Y-coord (write VRAM (active page))
         INC	HL
         INC	HL			; leave sprite X-coord alone
         LD	A,C
-        CALL	C08CB			; set sprite pattern (write VRAM (active page))
+        CALL	WTRVRM			; set sprite pattern (write VRAM (active page))
         INC	HL
         INC	C
         LD	A,(RG1SAV)
@@ -1670,7 +1670,7 @@ J0727:	CALL	C08CB			; set sprite Y-coord (write VRAM (active page))
         INC	C
         INC	C			; yep, sprite+4
 J073C:	LD	A,E
-        CALL	C08CB			; set sprite color (write VRAM (active page))
+        CALL	WTRVRM			; set sprite color (write VRAM (active page))
         INC	HL
         DJNZ	J071E
         CALL	C0626			; MSX1 screenmode ?
@@ -1989,8 +1989,8 @@ C08C1:	LD	HL,00101H
 ;	  Subroutine write VRAM (active page)
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
-
-C08CB:	PUSH	AF
+; @08CB
+WTRVRM:	PUSH	AF
         CALL	C08E3			; set VRAM pointer for writing (active page)
         POP	AF
         OUT	(98H),A
@@ -4032,7 +4032,7 @@ J13CA:	LD	B,A
         ADD	A,A
         ADD	A,A
 J13DF:	OR	C
-        CALL	C08CB			; write VRAM (active page)
+        CALL	WTRVRM			; write VRAM (active page)
         POP	HL
         POP	DE
         POP	BC
@@ -6343,7 +6343,7 @@ J2028:	CP	C
 ;	     Inputs  ________________________
 ;	     Outputs ________________________
 
-C2033:	SUB	0EH	; 14 
+C2033:	SUB	0EH	; 14
         JR	NC,C2033
         ADD	A,1CH
         CPL
@@ -6787,7 +6787,7 @@ J22F4:	CALL	C0602			; evaluate address operand
         DEFB	","
         RST	28H			; evaluate byte operand
         EX	(SP),HL
-        CALL	C08CB			; write VRAM (active page)
+        CALL	WTRVRM			; write VRAM (active page)
         LD	HL,0
         CALL	C08D6			; read VRAM (active page)
         POP	HL

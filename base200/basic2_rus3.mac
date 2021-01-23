@@ -9426,21 +9426,22 @@ J6BCE:	CALL	H.BINS
 J6BD4:	CALL	H.BINL
         JP	J6E6B			; bad filename
 
-;	Subroutine	get i/o channel device
-;	Inputs		(PTRFIL) = pointer to i/o channel control block
-;	Outputs		________________________
-;	Unused Code
-;	Not called from anywhere, leftover from a early Microsoft BASIC ?
+;	Subroutine	checks interrupt status
+;	Inputs		None
+;	Outputs		Carry set if interrupts disabled.
 
-?6BDA:	PUSH	HL
-        PUSH	DE
-        LD	HL,(PTRFIL)
-        LD	DE,4
-        ADD	HL,DE
-        LD	A,(HL)
-        POP	DE
-        POP	HL
-        RET
+GETIFF: XOR  A    ; @6BDA C flag, acc=0
+        PUSH AF   ; Stack bottom=#00xx
+        POP  AF   ; Restore SP
+        LD   A,I  ; P flag=IFF2
+        RET  PE   ; Exit if enabled
+        DEC  SP   ; May be disabled
+        DEC  SP   ; Has stack bottom been
+        POP  AF   ; overwritten?
+        OR   A    ; If not #00xx, INT's
+        RET  NZ   ; were actually enabled.
+        SCF       ; Otherwise, they really
+        RET       ; are disabled.
 
 J6BE7:	JR	NZ,J6C02		; not end of statement, evaluate channels
         PUSH	HL			; save basic pointer

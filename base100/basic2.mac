@@ -12604,7 +12604,7 @@ J7DBE:  EX      (SP),HL
         ADD     A,04H
         LD      C,A
         CP      90H
-        JR      C,J7D82                 ; next secundair slot
+        JR      C,J7D82                 ; next secondary slot
         AND     03H
         LD      C,A
         DEFB    03EH                    ; skip next instruction

@@ -747,8 +747,8 @@ J0330:	EX	AF,AF'
         RET
 
 ;	Subroutine	ENASLT
-;	Inputs		________________________
-;	Outputs		________________________
+;	Inputs		A=SlotId, H=page
+;	Outputs		ABCDE corrupted
 
 
 C0333:	CALL	C0353			; calculate masks
@@ -765,7 +765,7 @@ C0333:	CALL	C0353			; calculate masks
 
 
 J0340:	PUSH	HL
-        CALL	C0378			; adjust secundairy slotregister
+        CALL	C0378			; adjust secondary slotregister
         LD	C,A
         LD	B,00H
         LD	A,L
@@ -779,7 +779,7 @@ J0340:	PUSH	HL
         JR	C0333			; do a ENASLT on only the primary slot
 
 ;	Subroutine	calculate masks
-;	Inputs		A=slotid, HL=adres
+;	Inputs		A=slotid, HL=adress
 ;	Outputs		P set if expanded slot, A=slotid, D=PPPPPPPP, E=page select mask
 ;	             B=primairy slot or mask, C=page clear mask
 
@@ -814,7 +814,7 @@ J036E:	ADD	A,55H
         RET
 
 ;	Subroutine	Adjust secundairy slotregister
-;	Inputs		A=slotid, D=, E=
+;	Inputs		A=slotid, D=each pair of bits is primary slot, E=page select mask
 ;	Outputs		A=slotid primairy slot
 
 C0378:	PUSH	AF

@@ -208,7 +208,7 @@ J0F50:	LD	(INTFLG),A
 
 C0F55:	LD	HL,(PUTPNT)
         LD	(HL),A			; put in keyboardbuffer
-        CALL	C105B			; reset DEAD status, next postition in keyboardbuffer with roundtrip
+        CALL	C105B			; reset DEAD status, next position in keyboardbuffer with roundtrip
         LD	A,(GETPNT)
         CP	L			; keyboard buffer full ?
         RET	Z			; yep, quit

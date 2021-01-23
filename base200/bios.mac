@@ -2617,18 +2617,18 @@ C0B98:  PUSH    BC
         AND     A
         LD      A,(LINLEN)
         JR      Z,J0BB3
-        SBC     A,22H   ; """
+        SBC     A,22H   
         JR      J0BC0
 
-J0BB3:  CP      29H     ; ")"
+J0BB3:  CP      29H     
         JR      C,J0BBD
         ADD     HL,BC
         ADD     HL,HL
-        SBC     A,52H   ; "R"
+        SBC     A,52H   
         JR      J0BC0
 
 J0BBD:  ADD     HL,BC
-        SBC     A,2AH   ; "*"
+        SBC     A,2AH
 J0BC0:  ADD     HL,DE
         CPL
         AND     A

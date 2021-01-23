@@ -128,6 +128,7 @@ ACPAGE  EQU     0FAF6H
 EXBRSA  EQU     0FAF8H
 CHRCNT  EQU     0FAF9H
 MODE    EQU     0FAFCH
+NORUSE  EQU     0FAFDH
 XSAVE   EQU     0FAFEH
 LOGOPR  EQU     0FB02H
 HOKVLD  EQU     0FB20H
@@ -209,6 +210,8 @@ RG8SAV  EQU     0FFE7H
 
 D.FFFF  EQU     0FFFFH  ; secundairy slotregister
 
+CURSOR_CODE EQU 127
+
 CHKRAM: DI
         JP      J0416
 
@@ -285,7 +288,7 @@ WRTVRM: JP      C07D7
 SETRD:  JP      C0808
 SETWRT: JP      C07F4
 FILVRM: JP      J083B
-LDIRMV: JP      C073D
+LDIRMV: JP      C0741
 LDIRVM: JP      C0780
 CHGMOD: JP      J08B1
 CHGCLR: JP      J081A
@@ -383,9 +386,25 @@ BIGFIL: JP      C0838
 NSETRD: JP      C06C5
 NSTWRT: JP      C06B3
 NRDVRM: JP      J07E9
-NWRVRM: JP      J0769
+NWRVRM: JP      J076D
 
-        DEFS    001B6H-$		; unused space (60 bytes)
+        DEFS    0019CH-$		; unused space (34 bytes)
+
+;       Subroutine      Display cursor
+;       Inputs          ________________________
+;       Outputs         ABCDEFHL changed
+
+DSPCUR: CALL    H.DSPC  ; @019CH
+        CALL    C0B4E
+        RET     NC
+        LD      HL,(CSRY)
+        PUSH    HL
+        CALL    C0B83
+        LD      (CURSAV),A
+        CALL    APPCUR
+        POP     HL
+        LD      C,CURSOR_CODE
+        JP      C0B8D
 
 J01B6:  POP     AF
         LD      D,0FCH
@@ -1296,7 +1315,7 @@ J0629:  LD      A,B
         OUT     (99H),A
         LD      A,C
         OR      80H
-        EI
+        NOP                             ; EI
         OUT     (99H),A
         PUSH    HL
         LD      A,B
@@ -1407,11 +1426,11 @@ C0687:  EX      DE,HL
 
 C068F:  EX      DE,HL
         LD      A,(SCRMOD)
-        SUB     05H     ; 5 
-        JR      C,J06A6
-        AND     02H     ; 2 
+        SUB     05H      ; For screen 0…4
+        JR      C,J06A6  ; jump  TODO: replace JR C with RET NC and move zeroing D above, then reuse for zeroing A below — 1 byte economy.
+        AND     02H      ; Modes 5…6 or 7…8?
         LD      A,H
-        JR      NZ,J069D
+        JR      NZ,J069D  ; Skip one RRA for modes 7…8.
         RRA
 J069D:  RRA
         LD      H,A
@@ -1438,24 +1457,24 @@ C06A9:  PUSH    BC
         POP     BC
         RET
 
-;       Subroutine      NSTWRT
+;       Subroutine      NSTWRT — new SETWRT, setting VRAM address to write.
 ;       Inputs          HL=vram address (range:0-0FFFFH)
 ;       Outputs         ________________________
 
 
-C06B3:  PUSH    BC
-        PUSH    DE
-        PUSH    HL
+C06B3:  PUSH    BC  ; This piece is almost same as below.
+        PUSH    DE  ; The difference is only OR 40H.
+        PUSH    HL  ; So TODO: try to refactor to economy some bytes.
         LD      A,(ACPAGE)
         AND     A
         LD      D,A
         CALL    NZ,C068F
         LD      A,H
-        AND     3FH     ; "?"
-        OR      40H     ; "@"
+        AND     3FH     ; Reset higher bits
+        OR      40H     ; Write flag
         JR      J06D3
 
-;       Subroutine      NSETRD
+;       Subroutine      NSETRD — new SETRD, setting VRAM address to read.
 ;       Inputs          HL=vram address (range:0-0FFFFH)
 ;       Outputs         ________________________
 
@@ -1468,7 +1487,7 @@ C06C5:  PUSH    BC
         LD      D,A
         CALL    NZ,C068F
         LD      A,H
-        AND     3FH     ; "?"
+        AND     3FH     ; Reset higher bits
 J06D3:  PUSH    AF
         LD      A,H
         AND     0C0H
@@ -1536,64 +1555,58 @@ C070C:  LD      A,(RG1SAV)
         LD      A,20H
         RET
 
-;       Subroutine      Initialize character pattern table
-;       Inputs          ________________________
-;       Outputs         ________________________
-;       Remark          Unused code, same code is in subrom
-;                       code was used in INITXT and INIT32, but these too are moved in subrom
+        ; Initialize character pattern table routine was here
+        ; @0717H…@073D, but there is working copy at subrom,
+        ; and this was unused, so I removed it.
 
-?0717:  CALL    H.INIP
-        LD      HL,(CGPBAS)
-        CALL    C07F4
-        LD      A,(CGPNT+0)
-        LD      HL,(CGPNT+1)
-        LD      BC,256*8
+ISVINT :IN      A,(0BAH)  ; @0717H
+        AND     10H     ; 16
+        JR      NZ,ISVINT0
+        LD      HL,XSAVE+1
+        SET     7,(HL)
+        LD      A,20H   ; " "
+        OUT     (0BBH),A
+        OR      08H     ; 8
+        OUT     (0BBH),A
+ISVINT0:IN      A,(99H)
+        AND     A
+        RET     P
         PUSH    AF
-J072A:  POP     AF
-        PUSH    AF
-        PUSH    BC
-        DI
-        CALL    C01F5
-        EI
-        POP     BC
-        OUT     (98H),A
-        INC     HL
-        DEC     BC
-        LD      A,C
-        OR      B
-        JR      NZ,J072A
+        DB 0,0,0  ;CALL    APPCUR; FIXME removed until LDIRVM, LDIRMV and other VRAM accesses imbraced with disabled interrupt section each.
         POP     AF
         RET
+
+        DEFS    0741H-$     ; unused space (13 bytes)
 
 ;       Subroutine      LDIRMV (vram to memory)
 ;       Inputs          HL = vram address, DE = ram address, BC = size
 ;       Outputs         ________________________
 
 
-C073D:  LD      A,(SCRMOD)
+C0741:  LD      A,(SCRMOD)
         CP      04H     ; 4 
-        JR      NC,J075A
+        JR      NC,J075E
         LD      A,(MODE)
         AND     08H     ; 8 
-        JR      NZ,J075A
+        JR      NZ,J075E
         CALL    C0808
         EX      (SP),HL
         EX      (SP),HL
-J0750:  IN      A,(98H)
+J0754:  IN      A,(98H)
         LD      (DE),A
         INC     DE
         DEC     BC
         LD      A,C
         OR      B
-        JR      NZ,J0750
+        JR      NZ,J0754
         RET
 
-J075A:  CALL    C06C5
+J075E:  CALL    C06C5
         CALL    C0687
         LD      C,98H
-J0762:  INIR
+J0766:  INIR
         DEC     A
-        JR      NZ,J0762
+        JR      NZ,J0766
         EX      DE,HL
         RET
 
@@ -1602,18 +1615,13 @@ J0762:  INIR
 ;       Outputs         ________________________
 
 
-J0769:  PUSH    AF
+J076D:  PUSH    AF
         CALL    C06B3
         EX      (SP),HL
         EX      (SP),HL
         POP     AF
         OUT     (98H),A
         RET
-
-        
-        DEFS    0777H-$
-
-
 ;         Subroutine __________________________
 ;            Inputs  ________________________
 ;            Outputs ________________________
@@ -1634,9 +1642,9 @@ C0780:  EX      DE,HL
         CP      04H     ; 4 
         JR      NC,J079C
         LD      A,(MODE)
-        AND     08H     ; 8 
-        JR      NZ,J079C
-        CALL    C07F4
+        AND     08H       ; Mask at screen 0…3?
+        JR      NZ,J079C  ; if yes jump.
+        CALL    C07F4     ; SETWRT
 J0792:  LD      A,(DE)
         OUT     (98H),A
         INC     DE
@@ -1646,7 +1654,7 @@ J0792:  LD      A,(DE)
         JR      NZ,J0792
         RET
 
-J079C:  CALL    C06B3
+J079C:  CALL    C06B3     ; NSTWRT
         CALL    C0687
         LD      C,98H
 J07A4:  OTIR
@@ -1700,7 +1708,7 @@ C07CE:  PUSH    IX
 
 
 C07D7:  PUSH    AF
-        CALL    C07F4
+        CALL    C07F4  ; SETWRT
         EX      (SP),HL
         EX      (SP),HL
         POP     AF
@@ -1736,7 +1744,7 @@ J07E9:  CALL    C06C5
 
 C07F1:  CALL    C0B98
 
-;       Subroutine      SETWRT
+;       Subroutine      SETWRT — set VRAM address to write.
 ;       Inputs          HL=vram address
 ;       Outputs         ________________________
 
@@ -1749,13 +1757,13 @@ C07F4:  XOR     A
         LD      A,L
         OUT     (99H),A
         LD      A,H
-        AND     3FH     ; "?"
-        OR      40H     ; "@"
+        AND     3FH
+        OR      40H
         OUT     (99H),A
-        EI
+        NOP                 ; EI
         RET
 
-;       Subroutine      SETRD
+;       Subroutine      SETRD — setting VRAM address to read.
 ;       Inputs          ________________________
 ;       Outputs         ________________________
 
@@ -1768,7 +1776,7 @@ C0808:  XOR     A
         LD      A,L
         OUT     (99H),A
         LD      A,H
-        AND     3FH     ; "?"
+        AND     3FH     ;  Reset higher bits.
         OUT     (99H),A
         EI
         RET
@@ -1828,20 +1836,20 @@ J0853:  POP     AF
         PUSH    DE
         LD      E,A
         LD      A,H
-        AND     3FH     ; "?"
+        AND     3FH
         LD      H,A
         PUSH    HL
         ADD     HL,BC
         DEC     HL
         LD      A,H
-        CP      40H     ; "@"
+        CP      40H
         POP     HL
         JR      C,J087A
         PUSH    BC
         XOR     A
         SUB     L
         LD      C,A
-        LD      A,40H   ; "@"
+        LD      A,40H
         SBC     A,H
         LD      B,A
         LD      A,E
@@ -1850,7 +1858,7 @@ J0853:  POP     AF
         ADD     HL,BC
         LD      C,L
         LD      A,H
-        SUB     40H     ; "@"
+        SUB     40H
         LD      B,A
         LD      HL,0
 J087A:  LD      A,E
@@ -1992,10 +2000,10 @@ C08FA:  PUSH    HL
         LD      (HL),A
         JR      Z,J0911
         POP     AF
-        SUB     40H     ; "@"
-        CP      20H     ; " "
+        SUB     40H
+        CP      20H
         JR      C,J090F
-        ADD     A,40H   ; "@"
+        ADD     A,40H
 J090D:  CP      A
         SCF
 J090F:  POP     HL
@@ -2047,7 +2055,7 @@ C093C:  CALL    C08FA
         AND     A
         JP      NZ,J09EC
         LD      A,C
-        CP      20H     ; " "
+        CP      20H
         JR      C,J0971
 J0950:  LD      HL,(CSRY)
         CP      7FH
@@ -2247,6 +2255,7 @@ C0A37:  LD      A, (CSRSW)
         AND     A
         RET     NZ
         JR      J0A43
+
 ;       Subroutine      display cursor when enabled
 ;       Inputs          ________________________
 ;       Outputs         ________________________
@@ -2255,13 +2264,18 @@ C0A37:  LD      A, (CSRSW)
 C0A3E:  LD      A, (CSRSW)
         AND     A
         RET     Z
-J0A43:  CALL    H.DSPC
-        CALL    C0B4E
+J0A43:  JP      DSPCUR
+
+;       Subroutine      Apply cursor
+;       Inputs          None
+;       Outputs         ABCDEFHL changed
+; Function that extracts character look and updates cursor look based on it.
+; To add checking CURSOR_CODE is at CSR(Y/X) via CALL C0B83.
+
+        
+APPCUR: CALL    C0B4E  ; @0A46H
         RET     NC
-        LD      HL,(CSRY)
-        PUSH    HL
-        CALL    C0B83
-        LD      (CURSAV),A
+        LD      A, (CURSAV)
         LD      L,A
         LD      H,00H
         ADD     HL,HL
@@ -2272,25 +2286,37 @@ J0A43:  CALL    H.DSPC
         PUSH    HL
         ADD     HL,DE
         CALL    C0B54
-        LD      HL,LINWRK+7
-        LD      B,08H   ; 8 
-        LD      A,(CSTYLE)
+        LD      HL, LINWRK
+        PUSH    HL      ; Where to apply address.
+; FIXME removed until LDIRVM, LDIRMV and other VRAM accesses imbraced with disabled interrupt section each.
+;        LD      HL, T1BBF+020H*8  ; (space)
+;        PUSH    HL      ; XOR pattern address.
+;        LD      A, (JIFFY)
+;        AND     16
+;        CALL    Z, GETCURP
+;        PUSH    HL      ; OR pattern address.
+        CALL    GETCURP
+        PUSH    HL
+        LD      HL, T1BBF+020H*8  ; (space)
+        PUSH    HL
         AND     A
-        JR      Z,J0A70
-        LD      B,03H   ; 3 
-J0A70:  LD      A,(HL)
-        CPL
-        LD      (HL),A
-        DEC     HL
-        DJNZ    J0A70
+        DB 0,0,0,0
+;       ^ Replacement ^ for ^ FIXME ^
+
+        SBC     HL, HL  ; Carry is reset due AND.
+        PUSH    HL      ; Pattern row len and step.
+        LD      L, 8
+        PUSH    HL      ; Pattern rows count.
+        CALL    APLPTN
+        LD      HL, 10
+        ADD     HL, SP
+        LD      SP, HL
         POP     HL
-CURSOR_CODE EQU 127
         LD      BC,CURSOR_CODE*8
         ADD     HL,BC
-        CALL    C0B6B
-        POP     HL
-        LD      C,CURSOR_CODE
-        JP      C0B8D
+        JP      C0B6B
+        DEFS    0A84H-$,0		; unused space (1 byte)
+
 
 ;       Subroutine      remove cursor when disabled
 ;       Inputs          ________________________
@@ -2520,51 +2546,41 @@ C0B4E:  LD      A,(SCRMOD)
 ;       Outputs         ________________________
 
 
-C0B54:  PUSH    HL
-        LD      C,08H   ; 8 
-        JR      J0B61
-
-;       Subroutine      copy screenline to LINWRK
-;       Inputs          L=linenumber
-;       Outputs         ________________________
-;       Remark          Unused code, code is in subrom
-;                       This code will not even work if screen is in 80 kol mode because LINWRK is only 40 bytes!
-
-?0B59:  PUSH    HL
-        CALL    C0B96
-        LD      A,(LINLEN)
-        LD      C,A
-J0B61:  LD      B,00H
+C0B54:  LD      A,I
+        DI
+        PUSH    AF
+        PUSH    HL
+        LD      BC,08H
         LD      DE,LINWRK
-        CALL    C073D
+        CALL    C0741
         POP     HL
+        POP     AF
+        RET     P0
+        EI
         RET
+
+        DEFS    0B6BH-$  ; unused space (4 bytes)
 
 ;       Subroutine      copy 8 bytes from LINWRK to vram
 ;       Inputs          HL=vram address
 ;       Outputs         ________________________
 
 
-C0B6B:  PUSH    HL
-        LD      C,08H   ; 8 
-        JR      J0B78
-
-;       Subroutine      copy LINWRK to screenline
-;       Inputs          L=linenumber
-;       Outputs         ________________________
-;       Remark          Unused code, code is in subrom
-;                       This code will not even work if screen is in 80 kol mode because LINWRK is only 40 bytes!
-
-?0B70:  PUSH    HL
-        CALL    C0B96
-        LD      A,(LINLEN)
-        LD      C,A
-J0B78:  LD      B,00H
+C0B6B:  LD      A,I
+        DI
+        PUSH    AF
+        PUSH    HL
+        LD      BC,8H 
         EX      DE,HL
         LD      HL,LINWRK
         CALL    C0780
         POP     HL
+        POP     AF
+        RET     PO
+        NOP            ; EI
         RET
+
+        DEFS    0B83H-$  ; unused space (4 bytes)
 
 ;       Subroutine      read char from screenlocation
 ;       Inputs          H=x pos, L=y pos
@@ -2758,7 +2774,27 @@ J0C1E:  ADD     HL,DE
 J0C22:  POP     DE
         RET
 
-C0C24:  DEFS    0C3CH-$,0		; unused space (24 bytes)
+;       Subroutine      Shift right HL by A
+;       Inputs          HL what to shift
+;                       A number of bits to shift right (negative — left)
+;       Outputs         HL, AF changed, B=0
+
+SHRWRD: CP      128  ; @0C24H, TODO: looks AND A + JP does the job too, but faster.
+        JR      NC, SHRWRD1  ; Negative, jump to shift left
+        AND     A
+        RET     Z
+        LD      B, A
+SHRWRD0:SRL     H       ; @0C2BH
+        RR      L
+        DJNZ    SHRWRD0
+        RET
+SHRWRD1:NEG             ; @0C32H
+        LD      B, A
+SHRWRD3:ADD     HL, HL  ; @0C35H
+        DJNZ    SHRWRD3
+        RET
+
+        DEFS    0C3CH-$,0		; unused space (3 bytes)
 
 ;       Subroutine      KEYINT
 ;       Inputs          ________________________
@@ -2778,7 +2814,7 @@ J0C3C:  PUSH    HL
         PUSH    IY
         PUSH    IX
         CALL    H.KEYI
-        CALL    C1479
+        CALL    ISVINT
         JP      P,J0D02
         CALL    H.TIMI
         EI
@@ -3711,27 +3747,107 @@ J1414:  CALL    H.PHYD
 ;       Inputs          ________________________
 ;       Outputs         ________________________;
 
+J1418:  JP      H.FORM
 
-J1418:  CALL    H.FORM
-        RET
+;       Subroutine      Apply OR/XOR pattern
+;       Inputs          A=bits to shift pattern right, BC=where to apply,
+;                       HL=OR mask, DE=XOR mask
+;       Inputs          in stack:
+;                       2 bytes return address
+;                       1 byte: rows to process
+;                       1 byte: bits to shift pattern right (negative left)
+;                       1 byte: last byte in row (to increase address)
+;                       1 byte: last byte in row (to cut the pattern when exceeded, 0 or 1)
+;                       2 bytes: OR pattern address
+;                       2 bytes: XOR pattern address
+;                       2 bytes: where to apply address
+;       Outputs         AA'BCDEFF'HL changed.
 
-        DEFS    1479H-$,0
-
-;         Subroutine __________________________
-;            Inputs  ________________________
-;            Outputs ________________________
-
-C1479:  IN      A,(0BAH)
-        AND     10H     ; 16 
-        JR      NZ,J148C
-        LD      HL,XSAVE+1
-        SET     7,(HL)
-        LD      A,20H   ; " "
-        OUT     (0BBH),A
-        OR      08H     ; 8 
-        OUT     (0BBH),A
-J148C:  IN      A,(99H)
+APLPTN: LD      A,I     ; @141BH
+        DI              ; Stack fragile inbetween, so needed.
+        PUSH    AF
+APLPTN0:POP     AF      ; @141FH
+        EX      AF,AF'
+        POP     DE      ; Skip ret addr
+        POP     BC      ; B = shift rate
+        LD      A, C
         AND     A
+        JR      NZ, APLPTN1
+        PUSH    BC
+        PUSH    DE
+        EX      AF,AF'
+        RET     PO
+        NOP             ;EI
+        RET
+APLPTN1:LD      C, B    ; @142DH
+        POP     DE
+        LD      E, D    ; Pattern line length -1
+        POP     HL      ; OR mask addr
+        LD      D, (HL)
+        INC     HL
+        LD      A, E
+        EX      AF, AF'
+        LD      A, E
+        AND     A
+        JR      Z, APLPTN2
+        LD      E, (HL)
+APLPTN2:EX      DE, HL  ; @1431H OR pattern
+        EX      AF, AF' ; Saving Z-flag.
+        CALL    SHRWRD  ; OR pattern addr corrupted with return address,
+        PUSH    DE      ; so we restore it (incremented by 1)
+        POP     DE
+        LD      B, C    ; Restore shift rate
+        LD      C, H    ; OR mask
+        POP     HL      ; XOR pattern addr
+        LD      D, (HL)
+        INC     HL
+        EX      AF, AF' ; Restoring Z-flag
+        JR      Z, APLPTN3
+        LD      E, (HL)
+APLPTN3:EX      DE, HL  ; @1441H XOR pattern
+        CALL    SHRWRD  ; XOR pattern addr corrupted with return address,
+        PUSH    DE      ; so we restore it (incremented by 1)
+        POP     DE
+        LD      B, H    ; XOR mask
+        POP     DE      ; Where to apply address
+        LD      A, (DE)
+        OR      C
+        XOR     B
+        LD      (DE), A
+        INC     DE
+        PUSH    DE
+        LD      HL, -8
+        ADD     HL, SP
+        LD      SP, HL
+        POP     BC
+        DEC     C       ; One row served.
+        PUSH    BC
+        POP     BC
+        POP     BC
+        LD      B, 0    ; BC = bytes to skip for pattens to next row.
+        POP     HL
+        ADD     HL, BC  ; OR pattern address
+        EX      DE, HL
+        POP     HL
+        ADD     HL, BC  ; XOR pattern address
+        PUSH    HL
+        PUSH    DE
+        LD      HL, -8
+        ADD     HL, SP
+        LD      SP, HL  ; Stack restored, +2 bytes for IFF2
+        JR      APLPTN0
+
+;       Subroutine      Get cursor pattern address
+;       Inputs          None
+;       Outputs         HL — result, A changed
+
+        DEFS    1484H-$,0		; unused space (27 bytes)
+        
+GETCURP:LD      HL, T1BBF+09BH*8  ; @1484H (filled square)
+        LD      A,(CSTYLE)
+        AND     A
+        RET     Z
+        LD      HL, T1BBF+086H*8  ; (2px width line)
         RET
 
 
@@ -4157,15 +4273,15 @@ J16AB:  POP     AF
         RET
 
 J16AE:  POP     AF
-        CP      20H     ; " "
+        CP      20H
         CCF
         RET     C
-        CP      10H     ; 16 
+        CP      10H
         JR      C,J16BA
-        AND     0FH     ; 15 
+        AND     0FH
         RET
 
-J16BA:  AND     03H     ; 3 
+J16BA:  AND     03H
         PUSH    BC
         LD      B,A
         ADD     A,A
@@ -4203,7 +4319,7 @@ J16E7:  LD      HL,(CLOC)
         LD      A,(CMASK)
         PUSH    AF
 J16EE:  DI
-        LD      A,02H   ; 2 
+        LD      A,02H
         OUT     (99H),A
         LD      A,8FH
         OUT     (99H),A
@@ -4220,7 +4336,7 @@ J16EE:  DI
         RRCA
         JR      C,J16EE
         DI
-        LD      A,24H   ; "$"
+        LD      A,24H
         OUT     (99H),A
         LD      A,91H
         OUT     (99H),A
@@ -4232,7 +4348,7 @@ J16EE:  DI
         OUT     (9BH),A
         LD      A,(ACPAGE)
         OUT     (9BH),A
-        LD      A,2CH   ; ","
+        LD      A,2CH
         OUT     (99H),A
         LD      A,91H
         OUT     (99H),A
@@ -4240,7 +4356,7 @@ J16EE:  DI
         OUT     (9BH),A
         XOR     A
         OUT     (9BH),A
-        LD      A,50H   ; "P"
+        LD      A,50H
         OUT     (9BH),A
         EI
         RET
@@ -5039,6 +5155,7 @@ J1B87:  LD      A,(NTMSXP)
 
 
         IF      KEYTYP EQ 0
+; These lines between asterisks are for Japanese keyboard only.
 
 ; *************************************
 ; *************************************
